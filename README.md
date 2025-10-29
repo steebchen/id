@@ -4,6 +4,13 @@ Generate time-sortable ID strings using nanosecond precision and random bytes.
 
 ## Usage
 
+```shell
+npm i @steebchen/id
+yarn add @steebchen/id
+pnpm add @steebchen/id
+bun add @steebchen/id
+```
+
 ```typescript
 import { id } from '@steebchen/id';
 
