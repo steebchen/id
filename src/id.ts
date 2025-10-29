@@ -47,17 +47,10 @@ export function id(): string {
 	const timestamp = BigInt(ms) * 1_000_000n + (ns % 1_000_000n);
 
 	// Encode timestamp to base62 (ensures time-sortability)
-	const timestampPart = encodeBase62(timestamp).padStart(15, "0");
+	const timestampPart = encodeBase62(timestamp).padStart(14, "0");
 
-	// Generate 5 random bytes for uniqueness
-	const randomPart = encodeBufferToBase62(randomBytes(5));
+	// Generate 6 random bytes for uniqueness
+	const randomPart = encodeBufferToBase62(randomBytes(6));
 
 	return timestampPart + randomPart;
 }
-
-console.log(id());
-console.log(id());
-console.log(id());
-console.log(id());
-console.log(id());
-console.log(id());

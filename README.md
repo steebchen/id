@@ -2,6 +2,14 @@
 
 Generate time-sortable ID strings using nanosecond precision and random bytes.
 
+## Usage
+
+```typescript
+import { id } from '@steebchen/id';
+
+console.log(id()); // e.g., "000268cGxq69aAAzT2zw"
+```
+
 ## Why use time-sortable IDs?
 
 Time-sortable IDs combine the benefits of timestamps with unique identifiers:
@@ -24,17 +32,17 @@ Note that using more space efficient data types such as UUIDs might still be mor
 
 The ID generator creates 20-character strings that are guaranteed to be time-sortable:
 
-- **15 characters**: Unix timestamp with nanosecond precision, encoded in base62
-- **5 characters**: Cryptographically random bytes, encoded in base62
+- **14 characters**: Unix timestamp with nanosecond precision, encoded in base62
+- **6 characters**: Cryptographically random bytes, encoded in base62
 - **Character set**: `a-zA-Z0-9` (base62 encoding)
-- **Lifespan**: The 15-character timestamp encoding supports dates for over 24 billion years
+- **Lifespan**: The 14-character timestamp encoding supports dates for over 392 million years
 
 The timestamp portion ensures chronological sorting, while the random bytes provide uniqueness for IDs generated at the same nanosecond.
 
 ## Example
 
 ```typescript
-import { id } from 'id';
+import { id } from '@steebchen/id';
 
 console.log(id()); // e.g., "00BpN8qJiMEeF4kWJlmvn"
 console.log(id()); // e.g., "00BpN8qJiMEeGxYzAbCdE"
