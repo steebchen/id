@@ -1,0 +1,51 @@
+name: publish
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Get versions from .tool-versions
+        id: versions
+        run: |
+          if [ -f .tool-versions ]; then
+            NODE_VERSION=$(grep nodejs .tool-versions | awk '{print $2}')
+            PNPM_VERSION=$(grep pnpm .tool-versions | awk '{print $2}')
+            echo "node-version=${NODE_VERSION:-20}" >> $GITHUB_OUTPUT
+            echo "pnpm-version=${PNPM_VERSION:-8}" >> $GITHUB_OUTPUT
+          else
+            echo "node-version=20" >> $GITHUB_OUTPUT
+            echo "pnpm-version=8" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ steps.versions.outputs.pnpm-version }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ steps.versions.outputs.node-version }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: pnpm semantic-release

@@ -1,0 +1,20 @@
+{
+	"name": "@steebchen/id",
+	"version": "0.0.0",
+	"description": "Simple time-sortable IDs",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsc --watch"
+	},
+	"files": [
+		"dist"
+	],
+	"author": "steebchen",
+	"license": "MIT",
+	"devDependencies": {
+		"@types/node": "^24.9.2",
+		"typescript": "^5.3.0"
+	}
+}
