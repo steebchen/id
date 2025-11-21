@@ -75,3 +75,15 @@ export function id(options?: IdOptions): string {
 
 	return timestampPart + randomPart;
 }
+
+/**
+ * Generates a random string of specified length using base62 characters
+ *
+ * @param n - The length of the random string to generate
+ * @returns A random string of length n using characters a-zA-Z0-9
+ */
+export function random(n: number): string {
+	if (n <= 0) return "";
+	const bytes = randomBytes(n);
+	return encodeBufferToBase62(bytes).slice(0, n);
+}
