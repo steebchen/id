@@ -2,6 +2,9 @@ import { randomBytes } from "crypto";
 
 const BASE62_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
+// Track last timestamp to ensure monotonic ordering
+let lastTimestamp = 0n;
+
 /**
  * Encodes a number or bigint to base62 string
  */
@@ -65,7 +68,14 @@ export function id(options?: IdOptions): string {
 
 	// Combine: milliseconds to nanoseconds + sub-millisecond nanosecond precision
 	// We use modulo to get only the sub-millisecond part from hrtime
-	const timestamp = BigInt(ms) * 1_000_000n + (ns % 1_000_000n);
+	let timestamp = BigInt(ms) * 1_000_000n + (ns % 1_000_000n);
+
+	// Ensure monotonic ordering: if the new timestamp is not greater than the last,
+	// increment from the last timestamp to maintain sort order
+	if (timestamp <= lastTimestamp) {
+		timestamp = lastTimestamp + 1n;
+	}
+	lastTimestamp = timestamp;
 
 	// Encode timestamp to base62 (ensures time-sortability)
 	const timestampPart = encodeBase62(timestamp).padStart(14, "0");
