@@ -63,3 +63,16 @@ const ids = [id(), id(), id()];
 console.log(ids); // Already sorted chronologically
 ids.sort(); // Still in chronological order
 ```
+
+## Random String Generation
+
+The library also exports a `random()` function for generating random strings of a specified length:
+
+```typescript
+import { random } from '@steebchen/id';
+
+console.log(random(8));  // e.g., "Kx9mPqL2"
+console.log(random(16)); // e.g., "aB3dEf7HjKmN2pQr"
+```
+
+This is useful when you need random identifiers without the time-sortable prefix, such as for tokens, session IDs, or other cases where chronological ordering isn't needed.
