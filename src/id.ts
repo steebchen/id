@@ -2,6 +2,10 @@ import { randomBytes } from "crypto";
 
 const BASE62_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
+// Track last timestamp and counter to ensure monotonic ordering within this process
+let lastMs = 0;
+let counter = 0;
+
 /**
  * Encodes a number or bigint to base62 string
  */
@@ -38,10 +42,10 @@ export interface IdOptions {
 }
 
 /**
- * Generates a time-sortable ID with nanosecond precision
+ * Generates a time-sortable unique ID
  * Format: [timestamp in base62][random bytes in base62]
- * - Timestamp ensures chronological sorting
- * - Random bytes ensure uniqueness
+ * - Timestamp (ms + counter) ensures chronological sorting
+ * - Random bytes ensure uniqueness across machines
  * - Output uses only a-zA-Z0-9 characters
  *
  * @param options - Optional configuration object
@@ -49,8 +53,7 @@ export interface IdOptions {
  * @returns A time-sortable unique ID string
  */
 export function id(options?: IdOptions): string {
-	// Get current Unix timestamp with nanosecond precision
-	// Date.now() gives milliseconds, process.hrtime() gives nanosecond precision
+	// Get timestamp in milliseconds
 	let ms: number;
 
 	if (options?.date) {
@@ -61,11 +64,19 @@ export function id(options?: IdOptions): string {
 		ms = Date.now();
 	}
 
-	const ns = process.hrtime.bigint();
+	// Monotonic counter within the same millisecond for ordering within this process
+	// Across machines, IDs in different milliseconds sort by time (via synchronized clocks)
+	// IDs in the same millisecond from different machines have random ordering (acceptable)
+	if (ms === lastMs) {
+		counter++;
+	} else {
+		lastMs = ms;
+		counter = 0;
+	}
 
-	// Combine: milliseconds to nanoseconds + sub-millisecond nanosecond precision
-	// We use modulo to get only the sub-millisecond part from hrtime
-	const timestamp = BigInt(ms) * 1_000_000n + (ns % 1_000_000n);
+	// Combine milliseconds with counter for sub-millisecond ordering
+	// Counter is limited to 1,000,000 to fit in the nanosecond portion
+	const timestamp = BigInt(ms) * 1_000_000n + BigInt(counter % 1_000_000);
 
 	// Encode timestamp to base62 (ensures time-sortability)
 	const timestampPart = encodeBase62(timestamp).padStart(14, "0");
