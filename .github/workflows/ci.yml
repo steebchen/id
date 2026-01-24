@@ -1,0 +1,40 @@
+name: ci
+
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Get versions from .tool-versions
+        id: versions
+        run: |
+          if [ ! -f .tool-versions ]; then
+            echo "Error: .tool-versions file not found"
+            exit 1
+          fi
+          NODE_VERSION=$(grep nodejs .tool-versions | awk '{print $2}')
+          PNPM_VERSION=$(grep pnpm .tool-versions | awk '{print $2}')
+          echo "node-version=${NODE_VERSION}" >> $GITHUB_OUTPUT
+          echo "pnpm-version=${PNPM_VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ steps.versions.outputs.pnpm-version }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ steps.versions.outputs.node-version }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
