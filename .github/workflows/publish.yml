@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+permissions:
+  id-token: write # Required for npm OIDC
+  contents: write # Required for semantic-release
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -36,6 +40,7 @@ jobs:
         with:
           node-version: ${{ steps.versions.outputs.node-version }}
           cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -46,5 +51,4 @@ jobs:
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: pnpm semantic-release
