@@ -29,6 +29,10 @@
 	],
 	"author": "steebchen",
 	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/steebchen/id"
+	},
 	"devDependencies": {
 		"@types/node": "^24.9.2",
 		"semantic-release": "^25.0.1",
