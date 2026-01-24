@@ -1,6 +1,6 @@
 # ID - simple time-sortable ID generator
 
-Generate time-sortable ID strings using nanosecond precision and random bytes.
+Generate time-sortable ID strings using millisecond timestamps and random bytes.
 
 ## Usage
 
@@ -39,12 +39,12 @@ Note that using more space efficient data types such as UUIDs might still be mor
 
 The ID generator creates 20-character strings that are guaranteed to be time-sortable:
 
-- **14 characters**: Unix timestamp with nanosecond precision, encoded in base62
+- **14 characters**: Unix timestamp (milliseconds) with monotonic counter, encoded in base62
 - **6 characters**: Cryptographically random bytes, encoded in base62
 - **Character set**: `a-zA-Z0-9` (base62 encoding)
 - **Lifespan**: The 14-character timestamp encoding supports dates for over 392 million years
 
-The timestamp portion ensures chronological sorting, while the random bytes provide uniqueness for IDs generated at the same nanosecond.
+The timestamp portion ensures chronological sorting, while the random bytes provide uniqueness for IDs generated at the same millisecond across different machines.
 
 ## Example
 
