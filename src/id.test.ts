@@ -82,6 +82,42 @@ describe("id", () => {
 
 		expect(earlyId < laterId).toBe(true);
 	});
+
+	it("generates unique and strictly increasing IDs for repeated calls with same Date object", () => {
+		const date = new Date("2024-06-15T10:30:00.000Z");
+		const ids: string[] = [];
+
+		for (let i = 0; i < 100; i++) {
+			ids.push(id({ date }));
+		}
+
+		// All IDs should be unique
+		const unique = new Set(ids);
+		expect(unique.size).toBe(100);
+
+		// All IDs should be strictly increasing
+		for (let i = 1; i < ids.length; i++) {
+			expect(ids[i] > ids[i - 1]).toBe(true);
+		}
+	});
+
+	it("generates unique and strictly increasing IDs for repeated calls with same numeric timestamp", () => {
+		const timestamp = 1718444400000; // 2024-06-15T10:30:00.000Z
+		const ids: string[] = [];
+
+		for (let i = 0; i < 100; i++) {
+			ids.push(id({ date: timestamp }));
+		}
+
+		// All IDs should be unique
+		const unique = new Set(ids);
+		expect(unique.size).toBe(100);
+
+		// All IDs should be strictly increasing
+		for (let i = 1; i < ids.length; i++) {
+			expect(ids[i] > ids[i - 1]).toBe(true);
+		}
+	});
 });
 
 describe("random", () => {
