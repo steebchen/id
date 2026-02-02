@@ -2,9 +2,15 @@ import { randomBytes } from "crypto";
 
 const BASE62_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
-// Track last timestamp and counter to ensure monotonic ordering within this process
-let lastMs = 0;
-let counter = 0;
+// High-resolution time tracking for sub-millisecond precision
+// Uses hrtime.bigint() when available for nanosecond precision within a process
+const hasHrtime = typeof process !== "undefined" && typeof process.hrtime?.bigint === "function";
+const startHrtime = hasHrtime ? process.hrtime.bigint() : 0n;
+const startMs = Date.now();
+
+// Fallback counter for environments without hrtime or when using custom dates
+let lastTimestamp = 0n;
+let fallbackCounter = 0;
 
 /**
  * Encodes a number or bigint to base62 string
@@ -42,9 +48,26 @@ export interface IdOptions {
 }
 
 /**
+ * Gets a high-precision timestamp combining wall-clock time with sub-millisecond precision.
+ * Uses hrtime.bigint() for nanosecond precision when available.
+ */
+function getHighPrecisionTimestamp(): bigint {
+	if (hasHrtime) {
+		const hrtimeNow = process.hrtime.bigint();
+		const elapsedNs = hrtimeNow - startHrtime;
+		const elapsedMs = Number(elapsedNs / 1_000_000n);
+		const subMsNs = Number(elapsedNs % 1_000_000n);
+		const ms = startMs + elapsedMs;
+		return BigInt(ms) * 1_000_000n + BigInt(subMsNs);
+	}
+	// Fallback: use milliseconds only
+	return BigInt(Date.now()) * 1_000_000n;
+}
+
+/**
  * Generates a time-sortable unique ID
  * Format: [timestamp in base62][random bytes in base62]
- * - Timestamp (ms + counter) ensures chronological sorting
+ * - Timestamp with nanosecond precision ensures chronological sorting
  * - Random bytes ensure uniqueness across machines
  * - Output uses only a-zA-Z0-9 characters
  *
@@ -53,30 +76,33 @@ export interface IdOptions {
  * @returns A time-sortable unique ID string
  */
 export function id(options?: IdOptions): string {
-	// Get timestamp in milliseconds
-	let ms: number;
+	let timestamp: bigint;
 
 	if (options?.date) {
-		// Use provided date
-		ms = options.date instanceof Date ? options.date.getTime() : options.date;
-	} else {
-		// Use current time
-		ms = Date.now();
-	}
+		// Use provided date - fall back to counter-based approach since we can't use hrtime
+		const ms = options.date instanceof Date ? options.date.getTime() : options.date;
+		const baseTimestamp = BigInt(ms) * 1_000_000n;
 
-	// Monotonic counter within the same millisecond for ordering within this process
-	// Across machines, IDs in different milliseconds sort by time (via synchronized clocks)
-	// IDs in the same millisecond from different machines have random ordering (acceptable)
-	if (ms === lastMs) {
-		counter++;
+		// Use counter for custom dates to ensure uniqueness within same millisecond
+		if (baseTimestamp === lastTimestamp) {
+			fallbackCounter++;
+		} else {
+			lastTimestamp = baseTimestamp;
+			fallbackCounter = 0;
+		}
+		timestamp = baseTimestamp + BigInt(fallbackCounter % 1_000_000);
 	} else {
-		lastMs = ms;
-		counter = 0;
-	}
+		// Use high-precision timestamp for current time
+		timestamp = getHighPrecisionTimestamp();
 
-	// Combine milliseconds with counter for sub-millisecond ordering
-	// Counter is limited to 1,000,000 to fit in the nanosecond portion
-	const timestamp = BigInt(ms) * 1_000_000n + BigInt(counter % 1_000_000);
+		// Ensure monotonicity even if hrtime has quirks
+		if (timestamp <= lastTimestamp) {
+			lastTimestamp++;
+			timestamp = lastTimestamp;
+		} else {
+			lastTimestamp = timestamp;
+		}
+	}
 
 	// Encode timestamp to base62 (ensures time-sortability)
 	const timestampPart = encodeBase62(timestamp).padStart(14, "0");
